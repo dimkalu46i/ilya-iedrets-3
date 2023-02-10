@@ -4,26 +4,21 @@ namespace Shops.Entities;
 
 public class Shop
 {
-    private static int _id = 100000;
     private readonly List<ItemInShop> _items;
 
-    public Shop(string address, string shopName, List<ItemInShop> items)
+    public Shop(int id, string address, string shopName, List<ItemInShop> items)
     {
         ArgumentNullException.ThrowIfNull(items);
         if (string.IsNullOrWhiteSpace(address))
-        {
-            throw new ArgumentNullException("address");
-        }
+            throw new ArgumentNullException(address);
 
         if (string.IsNullOrWhiteSpace(shopName))
-        {
-            throw new ArgumentNullException("shopName");
-        }
+            throw new ArgumentNullException(shopName);
 
         Address = address;
         ShopName = shopName;
         _items = items;
-        Id = _id++;
+        Id = id;
     }
 
     public string Address { get; }
@@ -31,63 +26,44 @@ public class Shop
     public int Id { get; }
     public List<ItemInShop> Items => _items;
 
-    public void BuyItem(Person person, List<ItemInShop> items)
+    public void SellItem(ItemInShop item)
     {
-        ArgumentNullException.ThrowIfNull(person);
-        ArgumentNullException.ThrowIfNull(items);
+        ArgumentNullException.ThrowIfNull(item);
 
-        decimal totalSum = 0;
-        foreach (ItemInShop item in items)
-        {
-            var currentItem = _items.Find(itemInShop => itemInShop.Equals(item));
-            if (currentItem == null)
-            {
-                throw new ShopManagerException("item doesn't exist in shop");
-            }
+        ItemInShop itemInShop = _items.Find(i => i.ItemName == item.ItemName)
+                                ?? throw new NotEnoughItemException("item doesn't contain is _items");
+        if (itemInShop.Amount - item.Amount < 0)
+            throw new InvalidAmountValueException("not enough item to sell");
 
-            if (currentItem.Amount < item.Amount)
-            {
-                throw new ShopManagerException("isn't enough item in shop");
-            }
-
-            totalSum += currentItem.Cost * currentItem.Amount;
-        }
-
-        person.Buy(totalSum);
-
-        foreach (ItemInShop item in items)
-        {
-            var currentItem = items.Find(itemInShop => itemInShop.Equals(item));
-            ArgumentNullException.ThrowIfNull(currentItem);
-            currentItem.ChangeAmount(currentItem.Amount - item.Amount);
-        }
+        itemInShop.ChangeAmount(item.Amount);
     }
 
-    public void AddItem(List<ItemInShop> items)
+    public ItemInShop AddItem(ItemInShop item)
     {
-        ArgumentNullException.ThrowIfNull(items);
-        foreach (ItemInShop item in items)
+        ArgumentNullException.ThrowIfNull(item);
+
+        ItemInShop? currentItem = _items.Find(itemInShop => itemInShop.Equals(item));
+        if (currentItem == null)
         {
-            var currentItem = _items.Find(itemInShop => itemInShop.Equals(item));
-            if (currentItem == null)
-            {
-                _items.Add(item);
-            }
-            else
-            {
-                var newAmount = currentItem.Amount + 1;
-                currentItem.ChangeAmount(newAmount);
-            }
+            _items.Add(item);
         }
+        else
+        {
+            int newAmount = currentItem.Amount + 1;
+            currentItem.ChangeAmount(newAmount);
+        }
+
+        return item;
     }
 
     public void ChangeCost(decimal newCost, ItemInShop item)
     {
         ArgumentNullException.ThrowIfNull(item);
-        var currentItem = _items.Find(itemInShop => itemInShop.Equals(item));
+        ItemInShop? currentItem = _items.Find(itemInShop => itemInShop.Equals(item)
+                                                    && itemInShop.Amount >= item.Amount);
         if (currentItem == null)
         {
-            throw new ShopManagerException("item doesn't exist in shop");
+            throw new ShopManagerException("item doesn't contain in shop");
         }
 
         currentItem.ChangeCost(newCost);

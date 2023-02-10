@@ -4,13 +4,11 @@ namespace Shops.Entities;
 
 public class ItemInShop
 {
-    public ItemInShop(ItemName itemName, int amount, decimal cost = 0)
+    public ItemInShop(ItemName itemName, decimal cost, int amount = 1)
     {
         ArgumentNullException.ThrowIfNull(itemName);
-        if (cost < 0 || amount <= 0)
-        {
-            throw new ShopManagerException("cost or amount has ");
-        }
+        if (cost < 0)
+            throw new InvalidCostValueException("cost value have to be positive");
 
         ItemName = itemName;
         Cost = cost;
@@ -24,9 +22,7 @@ public class ItemInShop
     public void ChangeAmount(int newAmount)
     {
         if (newAmount <= 0)
-        {
-            throw new ShopManagerException("cost or amount has ");
-        }
+            throw new InvalidAmountValueException("amount value have to be positive");
 
         Amount = newAmount;
     }
@@ -34,9 +30,7 @@ public class ItemInShop
     public void ChangeCost(decimal newCost)
     {
         if (newCost <= 0)
-        {
-            throw new ShopManagerException("cost or amount has ");
-        }
+            throw new InvalidCostValueException("cost value have to be positive");
 
         Cost = newCost;
     }
